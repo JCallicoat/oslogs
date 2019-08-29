@@ -1,0 +1,32 @@
+#!/bin/bash
+
+# Make journalctl wrap lines
+SYSTEMD_LESS="FRXMK"
+
+NAME="$1"
+REST="${@:2}"
+IDS=""
+
+# Allow following journal if -f is first argument
+if [[ "$NAME" = "-f" ]]; then
+  NAME="$2"
+  REST="${@:3}"
+  IDS="-f "
+fi
+
+# Collect syslog identifiers to search for
+for id in $REST ; do
+  IDS="$IDS -t $id"
+done
+
+# Show system journal first
+if [[ ! -z "$REST" ]] ; then
+  journalctl $IDS
+  echo "Done viewing journal from system"
+fi
+
+# Then container journals
+for journal in /openstack/log/*${NAME}*/journal/ ; do
+  journalctl -D $journal $IDS
+  echo "Done viewing journal from $journal"
+done
